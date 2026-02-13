@@ -28,11 +28,11 @@ function Alert({
       <View
         role="alert"
         className={cn(
-          'bg-card border-border relative w-full rounded-lg border px-4 pb-2 pt-3.5',
+          'bg-card border-border relative w-full rounded-lg border px-4 pt-3.5 pb-2',
           className
         )}
         {...props}>
-        <View className="absolute left-3.5 top-3">
+        <View className="absolute top-3 left-3.5">
           <Icon
             as={icon}
             className={cn('size-4', variant === 'destructive' && 'text-destructive', iconClassName)}
@@ -50,7 +50,7 @@ function AlertTitle({
 }: React.ComponentProps<typeof Text> & React.RefAttributes<Text>) {
   return (
     <Text
-      className={cn('mb-1 ml-0.5 min-h-4 pl-6 font-medium leading-none tracking-tight', className)}
+      className={cn('mb-1 ml-0.5 min-h-4 pl-6 leading-none font-medium tracking-tight', className)}
       {...props}
     />
   );
