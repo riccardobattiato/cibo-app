@@ -21,6 +21,8 @@
     "performanceMode": true
   },
   "dependencies": {
+    "@legendapp/list": "^2.0.19",
+    "@legendapp/state": "^3.0.0-beta.43",
     "@op-engineering/op-sqlite": "^15.2.5",
     "@react-navigation/native": "^7.0.0",
     "@rn-primitives/accordion": "^1.2.0",

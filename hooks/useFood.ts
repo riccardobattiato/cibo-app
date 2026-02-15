@@ -1,30 +1,17 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useRepositories } from '@/contexts/RepositoriesProvider/repositories.provider';
+import { foodStore$ } from '@/features/pantry/food.store';
+import { syncState } from '@legendapp/state';
 import { FoodCategory, Food } from '@/models/food';
 
 export const useGetCategories = () => {
-  const { foodRepository } = useRepositories();
-  const [data, setData] = useState<FoodCategory[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const categories = foodStore$.categories.get();
+  const state = syncState(foodStore$.categories).get();
 
-  const fetchCategories = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const categories = await foodRepository.getCategories();
-      setData(categories);
-    } catch (err) {
-      setError(err as Error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [foodRepository]);
-
-  useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
-
-  return { data, isLoading, error, refetch: fetchCategories };
+  return {
+    data: categories || [],
+    isLoading: !state.isLoaded,
+    error: state.error,
+    refetch: () => foodStore$.categories.sync(),
+  };
 };
 
 export const useSearchFoods = (query: string) => {
