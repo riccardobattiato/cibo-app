@@ -1,55 +1,116 @@
+import React, { useState } from 'react';
+import { View } from 'react-native';
 import { Text } from '@/components/atoms/text';
-import { View, ScrollView } from 'react-native';
-import { useLanguage } from '@/locale/useLanguage';
-import { usePantryFacade } from '@/features/pantry/usePantryFacade';
 import { observer } from '@legendapp/state/react';
+import { usePantryFacade } from '@/features/pantry/usePantryFacade';
+import { PantryHeader } from '@/features/pantry/components/PantryHeader';
+import { CategoryGrid } from '@/features/pantry/components/CategoryGrid';
+import { FoodList } from '@/features/pantry/components/FoodList';
+import { CategoryDialog } from '@/features/pantry/components/CategoryDialog';
+import { UserFoodCategory } from '@/models/food';
 
 export default observer(function PantryScreen() {
-  const [t] = useLanguage();
-  const { categories, userCategories, isLoading, syncError } = usePantryFacade();
+  const {
+    categories,
+    userCategories,
+    foods,
+    selectedCategory,
+    setSelectedCategory,
+    searchQuery,
+    setSearchQuery,
+    isLoading,
+    syncError,
+    addCategory,
+    updateCategory,
+    deleteCategory,
+  } = usePantryFacade();
+
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<UserFoodCategory | null>(null);
+  const [categoryName, setCategoryName] = useState('');
+
+  const handleCategorySubmit = () => {
+    if (categoryName.trim()) {
+      if (editingCategory) {
+        updateCategory(editingCategory.id, categoryName);
+      } else {
+        addCategory(categoryName);
+      }
+      setCategoryName('');
+      setEditingCategory(null);
+      setIsCategoryDialogOpen(false);
+    }
+  };
+
+  const handleOpenEditCategory = (cat: UserFoodCategory) => {
+    setEditingCategory(cat);
+    setCategoryName(cat.name);
+    setIsCategoryDialogOpen(true);
+  };
+
+  const isDetailView = selectedCategory !== undefined || searchQuery.length > 0;
+
+  if (isLoading && !categories.length) {
+    return (
+      <View className="bg-background flex-1 items-center justify-center">
+        <Text className="text-muted-foreground italic">Loading...</Text>
+      </View>
+    );
+  }
 
   return (
-    <ScrollView className="bg-background flex-1">
-      <View className="gap-4 p-4">
-        <Text variant="h1">{t('pantry.title')}</Text>
+    <View className="bg-background flex-1">
+      <PantryHeader
+        isDetailView={isDetailView}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        onBack={() => {
+          setSelectedCategory(undefined);
+          setSearchQuery('');
+        }}
+        onNewCategory={() => setIsCategoryDialogOpen(true)}
+      />
 
-        {isLoading && <Text className="text-muted-foreground italic">Initializing store...</Text>}
-        {syncError && (
-          <Text className="text-destructive">
-            Error loading data:{' '}
-            {typeof syncError === 'string' ? syncError : JSON.stringify(syncError)}
+      {syncError && (
+        <View className="bg-destructive/10 p-4">
+          <Text className="text-destructive text-sm">
+            Error: {typeof syncError === 'string' ? syncError : JSON.stringify(syncError)}
           </Text>
-        )}
-
-        {/* Default Categories Section */}
-        <View className="gap-2">
-          <Text variant="h3" className="mt-4">
-            Default Categories (Read-Only)
-          </Text>
-          {categories.map((category) => (
-            <View key={`def-${category.id}`} className="border-border border-b p-2">
-              <Text>{category.name}</Text>
-            </View>
-          ))}
         </View>
+      )}
 
-        {/* User Categories Section */}
-        <View className="gap-2">
-          <Text variant="h3" className="text-primary mt-4">
-            Your Custom Categories
-          </Text>
-          {userCategories.map((category) => (
-            <View
-              key={`user-${category.id}`}
-              className="bg-secondary/20 border-border rounded border-b p-2">
-              <Text className="font-medium">{category.name}</Text>
-            </View>
-          ))}
-          {userCategories.length === 0 && (
-            <Text className="text-muted-foreground pl-2 italic">No custom categories yet.</Text>
-          )}
-        </View>
-      </View>
-    </ScrollView>
+      {!isDetailView ? (
+        <CategoryGrid
+          categories={categories}
+          userCategories={userCategories}
+          onSelectCategory={setSelectedCategory}
+          onNewCategory={() => setIsCategoryDialogOpen(true)}
+          onEditCategory={handleOpenEditCategory}
+          onDeleteCategory={deleteCategory}
+        />
+      ) : (
+        <FoodList
+          foods={foods}
+          onFoodPress={(food) => {
+            /* Handle food tap */
+          }}
+        />
+      )}
+
+      <CategoryDialog
+        isOpen={isCategoryDialogOpen}
+        onOpenChange={(open) => {
+          setIsCategoryDialogOpen(open);
+          if (!open) {
+            setEditingCategory(null);
+            setCategoryName('');
+          }
+        }}
+        categoryName={categoryName}
+        onCategoryNameChange={setCategoryName}
+        onSubmit={handleCategorySubmit}
+        isEditing={!!editingCategory}
+      />
+    </View>
   );
 });

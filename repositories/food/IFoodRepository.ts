@@ -17,8 +17,8 @@ export interface IFoodRepository {
 
   // User Custom Categories
   getUserCategories(): Promise<UserFoodCategory[]>;
-  createUserCategory(name: string): Promise<number>;
-  updateUserCategory(id: number, name: string): Promise<void>;
+  createUserCategory(name: string, icon?: string): Promise<number>;
+  updateUserCategory(id: number, name: string, icon?: string): Promise<void>;
   deleteUserCategory(id: number): Promise<void>;
 
   // User Custom Foods

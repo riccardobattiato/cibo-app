@@ -1,6 +1,7 @@
 export interface FoodCategory {
   id: number;
   name: string;
+  icon?: string;
 }
 
 export interface Food {
@@ -53,6 +54,7 @@ export interface FoodNutrientWithDefinition extends FoodNutrient {
 export interface UserFoodCategory {
   id: number;
   name: string;
+  icon?: string;
 }
 
 export interface UserFood {

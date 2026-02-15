@@ -18,7 +18,8 @@
     ]
   },
   "op-sqlite": {
-    "performanceMode": true
+    "performanceMode": true,
+    "fts5": true
   },
   "dependencies": {
     "@legendapp/list": "^2.0.19",

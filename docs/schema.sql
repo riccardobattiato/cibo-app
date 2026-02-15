@@ -5,7 +5,8 @@
 -- Stores the high-level food categories (e.g., "Cereali e derivati", "Carni fresche").
 CREATE TABLE categories (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL UNIQUE
+    name TEXT NOT NULL UNIQUE,
+    icon TEXT -- Icon name from Lucide library
 );
 
 -- 2. foods Table

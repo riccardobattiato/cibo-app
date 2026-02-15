@@ -16,7 +16,7 @@ export class FoodRepository implements IFoodRepository {
     if (!this.database.db) throw new Error('Database not initialized');
 
     const result = await this.database.db.execute(
-      'SELECT id, name FROM categories ORDER BY name ASC'
+      'SELECT id, name, icon FROM categories ORDER BY name ASC'
     );
     return (result.rows as unknown as FoodCategory[]) || [];
   }
@@ -81,22 +81,27 @@ export class FoodRepository implements IFoodRepository {
   async getUserCategories(): Promise<UserFoodCategory[]> {
     if (!this.database.db) throw new Error('Database not initialized');
     const result = await this.database.db.execute(
-      'SELECT * FROM user_categories ORDER BY name ASC'
+      'SELECT id, name, icon FROM user_categories ORDER BY name ASC'
     );
     return (result.rows as unknown as UserFoodCategory[]) || [];
   }
 
-  async createUserCategory(name: string): Promise<number> {
+  async createUserCategory(name: string, icon?: string): Promise<number> {
     if (!this.database.db) throw new Error('Database not initialized');
-    const result = await this.database.db.execute('INSERT INTO user_categories (name) VALUES (?)', [
-      name,
-    ]);
+    const result = await this.database.db.execute(
+      'INSERT INTO user_categories (name, icon) VALUES (?, ?)',
+      [name, icon ?? null]
+    );
     return result.insertId!;
   }
 
-  async updateUserCategory(id: number, name: string): Promise<void> {
+  async updateUserCategory(id: number, name: string, icon?: string): Promise<void> {
     if (!this.database.db) throw new Error('Database not initialized');
-    await this.database.db.execute('UPDATE user_categories SET name = ? WHERE id = ?', [name, id]);
+    await this.database.db.execute('UPDATE user_categories SET name = ?, icon = ? WHERE id = ?', [
+      name,
+      icon ?? null,
+      id,
+    ]);
   }
 
   async deleteUserCategory(id: number): Promise<void> {
@@ -136,22 +141,22 @@ export class FoodRepository implements IFoodRepository {
     `;
     const params = [
       food.name,
-      food.category_id,
+      food.category_id ?? null,
       food.is_category_custom ? 1 : 0,
-      food.source_food_id,
-      food.scientific_name,
-      food.english_name,
-      food.information,
-      food.edible_part_percentage,
-      food.portion_value,
-      food.portion_unit,
-      food.energy_kcal,
-      food.protein_g,
-      food.fat_g,
-      food.carbohydrates_g,
-      food.sugar_g,
-      food.fiber_g,
-      food.sodium_mg,
+      food.source_food_id ?? null,
+      food.scientific_name ?? null,
+      food.english_name ?? null,
+      food.information ?? null,
+      food.edible_part_percentage ?? null,
+      food.portion_value ?? null,
+      food.portion_unit ?? null,
+      food.energy_kcal ?? null,
+      food.protein_g ?? null,
+      food.fat_g ?? null,
+      food.carbohydrates_g ?? null,
+      food.sugar_g ?? null,
+      food.fiber_g ?? null,
+      food.sodium_mg ?? null,
     ];
     const result = await this.database.db.execute(query, params);
     return result.insertId!;
@@ -163,7 +168,7 @@ export class FoodRepository implements IFoodRepository {
     const params: any[] = [];
 
     Object.entries(food).forEach(([key, value]) => {
-      if (key !== 'id') {
+      if (key !== 'id' && value !== undefined) {
         updates.push(`${key} = ?`);
         params.push(value === true ? 1 : value === false ? 0 : value);
       }
