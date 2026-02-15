@@ -7,6 +7,9 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useUniwind } from 'uniwind';
 import { DatabaseProvider } from '@/contexts/DatabaseContext';
+import { StorageProvider } from '@/contexts/StorageProvider/storage.provider';
+import { StorageHandler } from '@/portability/StorageHandler/StorageHandler';
+import { IT, LocalizationProvider } from '@/locale/localization.provider';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -18,11 +21,15 @@ export default function RootLayout() {
 
   return (
     <DatabaseProvider>
-      <ThemeProvider value={NAV_THEME[theme ?? 'light']}>
-        <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
-        <Stack />
-        <PortalHost />
-      </ThemeProvider>
+      <StorageProvider StorageImplementation={StorageHandler}>
+        <LocalizationProvider preferredLanguage={IT}>
+          <ThemeProvider value={NAV_THEME[theme ?? 'light']}>
+            <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
+            <Stack />
+            <PortalHost />
+          </ThemeProvider>
+        </LocalizationProvider>
+      </StorageProvider>
     </DatabaseProvider>
   );
 }
