@@ -49,3 +49,31 @@ export interface FoodNutrientWithDefinition extends FoodNutrient {
   name: string;
   unit: string | null;
 }
+
+export interface UserFoodCategory {
+  id: number;
+  name: string;
+}
+
+export interface UserFood {
+  id: number;
+  name: string;
+  category_id: number | null;
+  is_category_custom: boolean;
+  source_food_id: number | null; // Null if not a variation
+  scientific_name: string | null;
+  english_name: string | null;
+  information: string | null;
+  edible_part_percentage: number | null;
+  portion_value: number | null;
+  portion_unit: string | null;
+
+  // Nutrients
+  energy_kcal: number | null;
+  protein_g: number | null;
+  fat_g: number | null;
+  carbohydrates_g: number | null;
+  sugar_g: number | null;
+  fiber_g: number | null;
+  sodium_mg: number | null;
+}
