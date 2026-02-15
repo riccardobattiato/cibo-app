@@ -26,7 +26,10 @@ export const FoodList: React.FC<FoodListProps> = ({ foods, onFoodPress }) => {
           <View className="flex-1">
             <Text className="font-semibold">{item.name}</Text>
             {item.english_name && (
-              <Text className="text-muted-foreground text-xs">{item.english_name}</Text>
+              <Text className="text-muted-foreground text-xs">
+                {t('food.carbs')} {item.carbohydrates_g} g, {t('food.protein')} {item.protein_g} g,{' '}
+                {t('food.fat')} {item.fat_g} g
+              </Text>
             )}
           </View>
           <View className="items-end">

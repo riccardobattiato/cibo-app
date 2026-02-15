@@ -34,6 +34,11 @@ export default {
     all: 'Tutti',
     kcalPer100g: 'per 100g',
   },
+  food: {
+    carbs: 'Carboidrati',
+    protein: 'Proteine',
+    fat: 'Grassi',
+  },
   settings: {
     title: 'Impostazioni',
   },
