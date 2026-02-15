@@ -34,10 +34,13 @@ export const foodStore$ = observable({
   }),
 
   foods: synced({
+    initial: [],
     get: async (): Promise<(Food | UserFood)[]> => {
-      await when(() => !!database.db);
+      // Track observables synchronously BEFORE any await to ensure reactivity in v3
       const sel = selectedCategory$.get();
       const query = searchQuery$.get();
+
+      await when(() => !!database.db);
 
       if (query) {
         // For search, we combine both default and user foods
@@ -59,6 +62,14 @@ export const foodStore$ = observable({
         if (sel.isCustom) {
           return foodRepo.getUserFoods(sel.id);
         } else {
+          if (sel.id === 0) {
+            // "All" category: combine default and user foods
+            const [defaultFoods, userFoods] = await Promise.all([
+              foodRepo.getFoods(),
+              foodRepo.getUserFoods(),
+            ]);
+            return [...defaultFoods, ...userFoods];
+          }
           return foodRepo.getFoods(sel.id);
         }
       }

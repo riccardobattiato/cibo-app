@@ -24,6 +24,7 @@ export default {
     addCategory: 'Aggiungi Categoria',
     deleteCategory: 'Elimina Categoria',
     categoryName: 'Nome Categoria',
+    icon: 'Icona',
     newCategoryDescription: 'Inserisci un nome per la tua nuova categoria.',
     editCategoryDescription: 'Modifica il nome della categoria.',
     cancel: 'Annulla',
