@@ -86,7 +86,6 @@ The application uses a provider-based architecture for dependency injection and 
 
 ```mermaid
 graph TD
-    A[ClerkProvider] --> B[Redux Provider]
     B --> C[AppQueryClientProvider]
     C --> D[StorageProvider]
     D --> E[LocalizationProvider]
@@ -389,27 +388,6 @@ export interface IStorage {
 - **Mobile**: React Native AsyncStorage
 - **Web**: LocalStorage/SessionStorage
 - **Secure**: Platform-specific secure storage
-
-## Authentication
-
-Authentication is handled through Clerk with token management:
-
-### Token Management
-
-```typescript
-export class ClerkTokenManagerDelegate implements ITokenManagerDelegate {
-  async getToken(): Promise<string | null> {
-    // Clerk token retrieval logic
-  }
-}
-```
-
-### Integration
-
-- Automatic token injection in HTTP requests
-- Token refresh handling
-- Authentication state management
-- Secure token storage
 
 ## Best Practices
 
