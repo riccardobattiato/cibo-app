@@ -6,7 +6,7 @@ import { PortalHost } from '@rn-primitives/portal';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useUniwind } from 'uniwind';
-import { DatabaseProvider } from '@/contexts/DatabaseContext';
+import { DatabaseProvider } from '@/contexts/DatabaseProvider/database.provider';
 import { StorageProvider } from '@/contexts/StorageProvider/storage.provider';
 import { StorageHandler } from '@/portability/StorageHandler/StorageHandler';
 import { IT, LocalizationProvider } from '@/locale/localization.provider';
@@ -25,7 +25,9 @@ export default function RootLayout() {
         <LocalizationProvider preferredLanguage={IT}>
           <ThemeProvider value={NAV_THEME[theme ?? 'light']}>
             <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
-            <Stack />
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="(tabs)" />
+            </Stack>
             <PortalHost />
           </ThemeProvider>
         </LocalizationProvider>
