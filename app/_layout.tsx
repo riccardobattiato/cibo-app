@@ -11,6 +11,8 @@ import { StorageProvider } from '@/contexts/StorageProvider/storage.provider';
 import { StorageHandler } from '@/portability/StorageHandler/StorageHandler';
 import { IT, LocalizationProvider } from '@/locale/localization.provider';
 import { RepositoriesProvider } from '@/contexts/RepositoriesProvider/repositories.provider';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -21,20 +23,24 @@ export default function RootLayout() {
   const { theme } = useUniwind();
 
   return (
-    <DatabaseProvider>
-      <RepositoriesProvider>
-        <StorageProvider StorageImplementation={StorageHandler}>
-          <LocalizationProvider preferredLanguage={IT}>
-            <ThemeProvider value={NAV_THEME[theme ?? 'light']}>
-              <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
-              <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="(tabs)" />
-              </Stack>
-              <PortalHost />
-            </ThemeProvider>
-          </LocalizationProvider>
-        </StorageProvider>
-      </RepositoriesProvider>
-    </DatabaseProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <DatabaseProvider>
+          <RepositoriesProvider>
+            <StorageProvider StorageImplementation={StorageHandler}>
+              <LocalizationProvider preferredLanguage={IT}>
+                <ThemeProvider value={NAV_THEME[theme ?? 'light']}>
+                  <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
+                  <Stack screenOptions={{ headerShown: false }}>
+                    <Stack.Screen name="(tabs)" />
+                  </Stack>
+                  <PortalHost />
+                </ThemeProvider>
+              </LocalizationProvider>
+            </StorageProvider>
+          </RepositoriesProvider>
+        </DatabaseProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

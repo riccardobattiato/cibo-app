@@ -7,7 +7,10 @@ function Textarea({
   numberOfLines = Platform.select({ web: 2, native: 8 }), // On web, numberOfLines also determines initial height. On native, it determines the maximum height.
   placeholderClassName,
   ...props
-}: TextInputProps & React.RefAttributes<TextInput>) {
+}: TextInputProps &
+  React.RefAttributes<TextInput> & {
+    placeholderClassName?: string;
+  }) {
   return (
     <TextInput
       className={cn(
@@ -18,6 +21,7 @@ function Textarea({
         props.editable === false && 'opacity-50',
         className
       )}
+      // @ts-ignore - placeholderClassName is supported by Uniwind
       placeholderClassName={cn('text-muted-foreground', placeholderClassName)}
       multiline={multiline}
       numberOfLines={numberOfLines}

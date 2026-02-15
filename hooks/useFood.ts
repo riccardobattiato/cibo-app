@@ -1,6 +1,8 @@
 import { foodStore$ } from '@/features/pantry/food.store';
 import { syncState } from '@legendapp/state';
 import { FoodCategory, Food } from '@/models/food';
+import { useRepositories } from '@/contexts/RepositoriesProvider/repositories.provider';
+import { useEffect, useState } from 'react';
 
 export const useGetCategories = () => {
   const categories = foodStore$.categories.get();
@@ -10,6 +12,7 @@ export const useGetCategories = () => {
     data: categories || [],
     isLoading: !state.isLoaded,
     error: state.error,
+    // @ts-ignore - sync() is available on synced observables in LS v3
     refetch: () => foodStore$.categories.sync(),
   };
 };
