@@ -10,6 +10,7 @@ import { DatabaseProvider } from '@/contexts/DatabaseProvider/database.provider'
 import { StorageProvider } from '@/contexts/StorageProvider/storage.provider';
 import { StorageHandler } from '@/portability/StorageHandler/StorageHandler';
 import { IT, LocalizationProvider } from '@/locale/localization.provider';
+import { RepositoriesProvider } from '@/contexts/RepositoriesProvider/repositories.provider';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -21,17 +22,19 @@ export default function RootLayout() {
 
   return (
     <DatabaseProvider>
-      <StorageProvider StorageImplementation={StorageHandler}>
-        <LocalizationProvider preferredLanguage={IT}>
-          <ThemeProvider value={NAV_THEME[theme ?? 'light']}>
-            <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="(tabs)" />
-            </Stack>
-            <PortalHost />
-          </ThemeProvider>
-        </LocalizationProvider>
-      </StorageProvider>
+      <RepositoriesProvider>
+        <StorageProvider StorageImplementation={StorageHandler}>
+          <LocalizationProvider preferredLanguage={IT}>
+            <ThemeProvider value={NAV_THEME[theme ?? 'light']}>
+              <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="(tabs)" />
+              </Stack>
+              <PortalHost />
+            </ThemeProvider>
+          </LocalizationProvider>
+        </StorageProvider>
+      </RepositoriesProvider>
     </DatabaseProvider>
   );
 }

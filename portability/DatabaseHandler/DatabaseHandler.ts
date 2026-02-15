@@ -15,9 +15,12 @@ export class AppDatabase implements IDatabase {
 
   async initialize(): Promise<void> {
     try {
-      const moved = await moveAssetsDatabase({ filename: this.DB_NAME });
+      const moved = await moveAssetsDatabase({
+        filename: this.DB_NAME,
+        overwrite: true,
+      });
       if (!moved) {
-        console.warn('Database might already be moved or failed to move.');
+        console.warn('Database move failed.');
       }
 
       this._db = open({ name: this.DB_NAME });
