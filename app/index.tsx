@@ -1,6 +1,6 @@
-import { Button } from '@/components/ui/button';
-import { Icon } from '@/components/ui/icon';
-import { Text } from '@/components/ui/text';
+import { Button } from '@/components/atoms/button';
+import { Icon } from '@/components/atoms/icon';
+import { Text } from '@/components/atoms/text';
 import { Link, Stack } from 'expo-router';
 import { MoonStarIcon, StarIcon, SunIcon } from 'lucide-react-native';
 import * as React from 'react';

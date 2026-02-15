@@ -1,6 +1,6 @@
-import { Icon } from '@/components/ui/icon';
-import { NativeOnlyAnimatedView } from '@/components/ui/native-only-animated-view';
-import { TextClassContext } from '@/components/ui/text';
+import { Icon } from '@/components/atoms/icon';
+import { NativeOnlyAnimatedView } from '@/components/atoms/native-only-animated-view';
+import { TextClassContext } from '@/components/atoms/text';
 import { cn } from '@/lib/utils';
 import * as ContextMenuPrimitive from '@rn-primitives/context-menu';
 import { Check, ChevronDown, ChevronRight, ChevronUp } from 'lucide-react-native';

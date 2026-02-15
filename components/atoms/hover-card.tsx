@@ -1,5 +1,5 @@
-import { NativeOnlyAnimatedView } from '@/components/ui/native-only-animated-view';
-import { TextClassContext } from '@/components/ui/text';
+import { NativeOnlyAnimatedView } from '@/components/atoms/native-only-animated-view';
+import { TextClassContext } from '@/components/atoms/text';
 import { cn } from '@/lib/utils';
 import * as HoverCardPrimitive from '@rn-primitives/hover-card';
 import * as React from 'react';

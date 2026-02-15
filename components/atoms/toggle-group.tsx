@@ -1,6 +1,6 @@
-import { Icon } from '@/components/ui/icon';
-import { TextClassContext } from '@/components/ui/text';
-import { toggleVariants } from '@/components/ui/toggle';
+import { Icon } from '@/components/atoms/icon';
+import { TextClassContext } from '@/components/atoms/text';
+import { toggleVariants } from '@/components/atoms/toggle';
 import { cn } from '@/lib/utils';
 import * as ToggleGroupPrimitive from '@rn-primitives/toggle-group';
 import type { VariantProps } from 'class-variance-authority';
