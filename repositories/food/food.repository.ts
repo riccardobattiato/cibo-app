@@ -134,7 +134,7 @@ export class FoodRepository implements IFoodRepository {
     if (!this.database.db) throw new Error('Database not initialized');
     const query = `
       INSERT INTO user_foods (
-        name, category_id, is_category_custom, source_food_id, scientific_name, 
+        name, category_id, is_category_custom, source_food_id, scientific_name,
         english_name, information, edible_part_percentage, portion_value, portion_unit,
         energy_kcal, protein_g, fat_g, carbohydrates_g, sugar_g, fiber_g, sodium_mg
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
