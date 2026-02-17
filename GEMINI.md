@@ -20,6 +20,8 @@ Most UI components are derived from **React Native Reusables**, which brings sha
 
 - **Documentation:** [https://reactnativereusables.com/docs](https://reactnativereusables.com/docs)
 - Components are primarily located in `components/atoms`.
+- The `components/molecules` directory contains more complex components that combine multiple atoms, but only when they can stay generic. Otherwise, see below.
+- Specific UI components should live inside the proper feature folder in `features/`.
 
 ## Project Structure
 
