@@ -13,6 +13,13 @@
   --spacing-hairline: hairlineWidth();
 }
 
+@theme static {
+  --color-red-500: #ef4444;
+  --color-emerald-500: #10b981;
+  --color-amber-500: #f59e0b;
+  --color-zinc-300: #d4d4d8;
+}
+
 @layer theme {
   :root {
     @variant light {

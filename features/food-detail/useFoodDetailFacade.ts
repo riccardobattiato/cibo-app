@@ -83,9 +83,27 @@ export const useFoodDetailFacade = (id: string, isCustom: string) => {
   const macros = useMemo(() => {
     if (!food) return [];
     return [
-      { key: 'protein', value: food.protein_g, color: '#ef4444', label: t('food.protein') },
-      { key: 'carbs', value: food.carbohydrates_g, color: '#10b981', label: t('food.carbs') },
-      { key: 'fat', value: food.fat_g, color: '#f59e0b', label: t('food.fat') },
+      {
+        key: 'protein',
+        value: food.protein_g,
+        colorVar: '--color-red-500',
+        colorClass: 'red',
+        label: t('food.protein'),
+      },
+      {
+        key: 'carbs',
+        value: food.carbohydrates_g,
+        colorVar: '--color-emerald-500',
+        colorClass: 'emerald',
+        label: t('food.carbs'),
+      },
+      {
+        key: 'fat',
+        value: food.fat_g,
+        colorVar: '--color-amber-500',
+        colorClass: 'amber',
+        label: t('food.fat'),
+      },
     ];
   }, [food, t]);
 
