@@ -16,6 +16,7 @@ The project uses a local SQLite database.
 
 ## UI Components
 
+TailwindCSS is implemented using Uniwind. [LLM Reference](https://docs.uniwind.dev/llms-full.txt)
 Most UI components are derived from **React Native Reusables**, which brings shadcn/ui patterns to React Native.
 
 - **Documentation:** [https://reactnativereusables.com/docs](https://reactnativereusables.com/docs)
