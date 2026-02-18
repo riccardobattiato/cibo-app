@@ -1,14 +1,16 @@
 import { moveAssetsDatabase, open, type DB } from '@op-engineering/op-sqlite';
+import { initializeDb, type DrizzleDb, DB_NAME } from '@/db';
 
 export interface IDatabase {
   db: DB | null;
+  drizzle: DrizzleDb | null;
   initialize(): Promise<void>;
   ready: Promise<void>;
 }
 
 export class AppDatabase implements IDatabase {
   private _db: DB | null = null;
-  private readonly DB_NAME = 'food.db';
+  private _drizzle: DrizzleDb | null = null;
   private _readyResolve!: () => void;
   readonly ready: Promise<void> = new Promise((resolve) => {
     this._readyResolve = resolve;
@@ -18,17 +20,22 @@ export class AppDatabase implements IDatabase {
     return this._db;
   }
 
+  get drizzle(): DrizzleDb | null {
+    return this._drizzle;
+  }
+
   async initialize(): Promise<void> {
     try {
       const moved = await moveAssetsDatabase({
-        filename: this.DB_NAME,
+        filename: DB_NAME,
         overwrite: true,
       });
       if (!moved) {
         throw new Error('Database move failed. Ensure the database is bundled in assets.');
       }
 
-      this._db = open({ name: this.DB_NAME });
+      this._db = open({ name: DB_NAME });
+      this._drizzle = initializeDb(this._db);
       await this.initializeUserTables();
       this._readyResolve();
       console.log('Database initialized successfully');

@@ -9,13 +9,22 @@ import {
   CopyableNutritionFields,
 } from '@/models/food';
 import { IDatabase } from '@/portability/DatabaseHandler/DatabaseHandler';
+import { eq, and, like, or } from 'drizzle-orm';
+import {
+  categories,
+  foods,
+  foodNutrients,
+  nutrientDefinitions,
+  userCategories,
+  userFoods,
+} from '@/db/schema';
 
 export class FoodRepository implements IFoodRepository {
   constructor(private readonly database: IDatabase) {}
 
-  private ensureDb(): NonNullable<IDatabase['db']> {
-    if (!this.database.db) throw new Error('Database not initialized');
-    return this.database.db;
+  private ensureDrizzle() {
+    if (!this.database.drizzle) throw new Error('Database not initialized');
+    return this.database.drizzle;
   }
 
   private extractNutritionFields(source: CopyableNutritionFields): CopyableNutritionFields {
@@ -53,173 +62,199 @@ export class FoodRepository implements IFoodRepository {
   }
 
   async getCategories(): Promise<FoodCategory[]> {
-    const db = this.ensureDb();
-    const result = await db.execute('SELECT id, name, icon FROM categories ORDER BY name ASC');
-    return (result.rows as unknown as FoodCategory[]) || [];
+    const db = this.ensureDrizzle();
+    const result = await db
+      .select({
+        id: categories.id,
+        name: categories.name,
+        icon: categories.icon,
+      })
+      .from(categories)
+      .orderBy(categories.name);
+    return result as FoodCategory[];
   }
 
   async getFoods(categoryId?: number): Promise<Food[]> {
-    const db = this.ensureDb();
-    let query = 'SELECT * FROM foods';
-    const params: any[] = [];
-
-    if (categoryId) {
-      query += ' WHERE category_id = ?';
-      params.push(categoryId);
-    }
-
-    query += ' ORDER BY name ASC';
-
-    const result = await db.execute(query, params);
-    return (result.rows as unknown as Food[]) || [];
+    const db = this.ensureDrizzle();
+    const query = categoryId
+      ? db.select().from(foods).where(eq(foods.category_id, categoryId)).orderBy(foods.name)
+      : db.select().from(foods).orderBy(foods.name);
+    const result = await query;
+    return result as Food[];
   }
 
   async getFoodById(id: number): Promise<FoodWithCategory | null> {
-    const db = this.ensureDb();
-    const query = `
-      SELECT f.*, c.name as category_name
-      FROM foods f
-      LEFT JOIN categories c ON f.category_id = c.id
-      WHERE f.id = ?
-    `;
+    const db = this.ensureDrizzle();
+    const result = await db
+      .select({
+        id: foods.id,
+        original_id: foods.original_id,
+        category_id: foods.category_id,
+        name: foods.name,
+        scientific_name: foods.scientific_name,
+        english_name: foods.english_name,
+        url: foods.url,
+        information: foods.information,
+        edible_part_percentage: foods.edible_part_percentage,
+        portion_value: foods.portion_value,
+        portion_unit: foods.portion_unit,
+        samples_count: foods.samples_count,
+        scraped_at: foods.scraped_at,
+        energy_kcal: foods.energy_kcal,
+        protein_g: foods.protein_g,
+        fat_g: foods.fat_g,
+        carbohydrates_g: foods.carbohydrates_g,
+        sugar_g: foods.sugar_g,
+        fiber_g: foods.fiber_g,
+        sodium_mg: foods.sodium_mg,
+        category_name: categories.name,
+      })
+      .from(foods)
+      .leftJoin(categories, eq(foods.category_id, categories.id))
+      .where(eq(foods.id, id));
 
-    const result = await db.execute(query, [id]);
-    const foods = (result.rows as unknown as FoodWithCategory[]) || [];
-    return foods.length > 0 ? foods[0] : null;
+    return result.length > 0 ? (result[0] as FoodWithCategory) : null;
   }
 
   async getFoodNutrients(foodId: number): Promise<FoodNutrientWithDefinition[]> {
-    const db = this.ensureDb();
-    const query = `
-      SELECT fn.*, nd.name, nd.unit
-      FROM food_nutrients fn
-      JOIN nutrient_definitions nd ON fn.nutrient_id = nd.id
-      WHERE fn.food_id = ?
-    `;
+    const db = this.ensureDrizzle();
+    const result = await db
+      .select({
+        food_id: foodNutrients.food_id,
+        nutrient_id: foodNutrients.nutrient_id,
+        value: foodNutrients.value,
+        is_trace: foodNutrients.is_trace,
+        name: nutrientDefinitions.name,
+        unit: nutrientDefinitions.unit,
+      })
+      .from(foodNutrients)
+      .innerJoin(nutrientDefinitions, eq(foodNutrients.nutrient_id, nutrientDefinitions.id))
+      .where(eq(foodNutrients.food_id, foodId));
 
-    const result = await db.execute(query, [foodId]);
-    return (result.rows as unknown as FoodNutrientWithDefinition[]) || [];
+    return result as FoodNutrientWithDefinition[];
   }
 
   async searchFoods(query: string): Promise<Food[]> {
-    const db = this.ensureDb();
-    const result = await db.execute(
-      'SELECT * FROM foods WHERE name LIKE ? OR english_name LIKE ? ORDER BY name ASC',
-      [`%${query}%`, `%${query}%`]
-    );
-    return (result.rows as unknown as Food[]) || [];
+    const db = this.ensureDrizzle();
+    const result = await db
+      .select()
+      .from(foods)
+      .where(or(like(foods.name, `%${query}%`), like(foods.english_name, `%${query}%`)))
+      .orderBy(foods.name);
+    return result as Food[];
   }
 
   async getUserCategories(): Promise<UserFoodCategory[]> {
-    const db = this.ensureDb();
-    const result = await db.execute('SELECT id, name, icon FROM user_categories ORDER BY name ASC');
-    return (result.rows as unknown as UserFoodCategory[]) || [];
+    const db = this.ensureDrizzle();
+    const result = await db
+      .select({
+        id: userCategories.id,
+        name: userCategories.name,
+        icon: userCategories.icon,
+      })
+      .from(userCategories)
+      .orderBy(userCategories.name);
+    return result as UserFoodCategory[];
   }
 
   async createUserCategory(name: string, icon?: string): Promise<number> {
-    const db = this.ensureDb();
-    const result = await db.execute('INSERT INTO user_categories (name, icon) VALUES (?, ?)', [
-      name,
-      icon ?? null,
-    ]);
-    return result.insertId!;
+    const db = this.ensureDrizzle();
+    const result = await db
+      .insert(userCategories)
+      .values({ name, icon: icon ?? null })
+      .returning({ id: userCategories.id });
+    return result[0].id;
   }
 
   async updateUserCategory(id: number, name: string, icon?: string): Promise<void> {
-    const db = this.ensureDb();
-    await db.execute('UPDATE user_categories SET name = ?, icon = ? WHERE id = ?', [
-      name,
-      icon ?? null,
-      id,
-    ]);
+    const db = this.ensureDrizzle();
+    await db
+      .update(userCategories)
+      .set({ name, icon: icon ?? null })
+      .where(eq(userCategories.id, id));
   }
 
   async deleteUserCategory(id: number): Promise<void> {
-    const db = this.ensureDb();
-    await db.execute('DELETE FROM user_categories WHERE id = ?', [id]);
+    const db = this.ensureDrizzle();
+    await db.delete(userCategories).where(eq(userCategories.id, id));
   }
 
   async getUserFoods(userCategoryId?: number): Promise<UserFood[]> {
-    const db = this.ensureDb();
-    let query = 'SELECT * FROM user_foods';
-    const params: any[] = [];
-    if (userCategoryId) {
-      query += ' WHERE category_id = ? AND is_category_custom = 1';
-      params.push(userCategoryId);
-    }
-    query += ' ORDER BY name ASC';
-    const result = await db.execute(query, params);
-    return (result.rows as unknown as UserFood[]) || [];
+    const db = this.ensureDrizzle();
+    const query = userCategoryId
+      ? db
+          .select()
+          .from(userFoods)
+          .where(
+            and(eq(userFoods.category_id, userCategoryId), eq(userFoods.is_category_custom, true))
+          )
+          .orderBy(userFoods.name)
+      : db.select().from(userFoods).orderBy(userFoods.name);
+    const result = await query;
+    return result as UserFood[];
   }
 
   async getUserFoodsByCategory(categoryId: number, isCustom: boolean): Promise<UserFood[]> {
-    const db = this.ensureDb();
-    const query =
-      'SELECT * FROM user_foods WHERE category_id = ? AND is_category_custom = ? ORDER BY name ASC';
-    const result = await db.execute(query, [categoryId, isCustom ? 1 : 0]);
-    return (result.rows as unknown as UserFood[]) || [];
+    const db = this.ensureDrizzle();
+    const result = await db
+      .select()
+      .from(userFoods)
+      .where(and(eq(userFoods.category_id, categoryId), eq(userFoods.is_category_custom, isCustom)))
+      .orderBy(userFoods.name);
+    return result as UserFood[];
   }
 
   async getUserFoodById(id: number): Promise<UserFood | null> {
-    const db = this.ensureDb();
-    const result = await db.execute('SELECT * FROM user_foods WHERE id = ?', [id]);
-    const foods = (result.rows as unknown as UserFood[]) || [];
-    return foods.length > 0 ? foods[0] : null;
+    const db = this.ensureDrizzle();
+    const result = await db.select().from(userFoods).where(eq(userFoods.id, id));
+    return result.length > 0 ? (result[0] as UserFood) : null;
   }
 
   async createUserFood(food: Omit<UserFood, 'id'>): Promise<number> {
-    const db = this.ensureDb();
-    const query = `
-      INSERT INTO user_foods (
-        name, category_id, is_category_custom, source_food_id, scientific_name,
-        english_name, information, edible_part_percentage, portion_value, portion_unit,
-        energy_kcal, protein_g, fat_g, carbohydrates_g, sugar_g, fiber_g, sodium_mg
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `;
-    const params = [
-      food.name,
-      food.category_id ?? null,
-      food.is_category_custom ? 1 : 0,
-      food.source_food_id ?? null,
-      food.scientific_name ?? null,
-      food.english_name ?? null,
-      food.information ?? null,
-      food.edible_part_percentage ?? null,
-      food.portion_value ?? null,
-      food.portion_unit ?? null,
-      food.energy_kcal ?? null,
-      food.protein_g ?? null,
-      food.fat_g ?? null,
-      food.carbohydrates_g ?? null,
-      food.sugar_g ?? null,
-      food.fiber_g ?? null,
-      food.sodium_mg ?? null,
-    ];
-    const result = await db.execute(query, params);
-    return result.insertId!;
+    const db = this.ensureDrizzle();
+    const result = await db
+      .insert(userFoods)
+      .values({
+        name: food.name,
+        category_id: food.category_id ?? null,
+        is_category_custom: food.is_category_custom ?? false,
+        source_food_id: food.source_food_id ?? null,
+        scientific_name: food.scientific_name ?? null,
+        english_name: food.english_name ?? null,
+        information: food.information ?? null,
+        edible_part_percentage: food.edible_part_percentage ?? null,
+        portion_value: food.portion_value ?? null,
+        portion_unit: food.portion_unit ?? null,
+        energy_kcal: food.energy_kcal ?? null,
+        protein_g: food.protein_g ?? null,
+        fat_g: food.fat_g ?? null,
+        carbohydrates_g: food.carbohydrates_g ?? null,
+        sugar_g: food.sugar_g ?? null,
+        fiber_g: food.fiber_g ?? null,
+        sodium_mg: food.sodium_mg ?? null,
+      })
+      .returning({ id: userFoods.id });
+    return result[0].id;
   }
 
   async updateUserFood(id: number, food: Partial<UserFood>): Promise<void> {
-    const db = this.ensureDb();
-    const updates: string[] = [];
-    const params: any[] = [];
+    const db = this.ensureDrizzle();
+    const updateData: Record<string, unknown> = {};
 
     Object.entries(food).forEach(([key, value]) => {
       if (key !== 'id' && value !== undefined) {
-        updates.push(`${key} = ?`);
-        params.push(value === true ? 1 : value === false ? 0 : value);
+        updateData[key] = value;
       }
     });
 
-    if (updates.length === 0) return;
+    if (Object.keys(updateData).length === 0) return;
 
-    params.push(id);
-    await db.execute(`UPDATE user_foods SET ${updates.join(', ')} WHERE id = ?`, params);
+    await db.update(userFoods).set(updateData).where(eq(userFoods.id, id));
   }
 
   async deleteUserFood(id: number): Promise<void> {
-    const db = this.ensureDb();
-    await db.execute('DELETE FROM user_foods WHERE id = ?', [id]);
+    const db = this.ensureDrizzle();
+    await db.delete(userFoods).where(eq(userFoods.id, id));
   }
 
   async createVariation(foodId: number): Promise<number> {
