@@ -13,13 +13,24 @@ interface FoodDetailScreenProps {
 }
 
 export const FoodDetailScreen: React.FC<FoodDetailScreenProps> = ({ id, isCustom }) => {
-  const { food, isLoading, categorizedNutrients, macros } = useFoodDetailFacade(id, isCustom);
+  const { food, isLoading, error, categorizedNutrients, macros } = useFoodDetailFacade(
+    id,
+    isCustom
+  );
   const [t, , locale] = useLanguage();
 
   if (isLoading) {
     return (
       <View className="bg-background flex-1 items-center justify-center">
         <Text>{t('pantry.all')}...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View className="bg-background flex-1 items-center justify-center">
+        <Text>Failed to load food details</Text>
       </View>
     );
   }

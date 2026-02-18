@@ -1,43 +1,31 @@
-import { useState, useEffect, useMemo } from 'react';
-import { useRepositories } from '@/contexts/RepositoriesProvider/repositories.provider';
-import { FoodWithCategory, UserFood, FoodNutrientWithDefinition } from '@/models/food';
+import { useMemo } from 'react';
+import { useValue } from '@legendapp/state/react';
+import { syncState } from '@legendapp/state';
+import { foodDetailStore$, selectedFoodId$ } from './food-detail.store';
 import { useLanguage } from '@/locale/useLanguage';
 import { categorizeNutrient, NutrientCategory } from '@/utils/helpers/nutrient-categorizer';
+import { FoodNutrientWithDefinition } from '@/models/food';
 
 export const useFoodDetailFacade = (id: string, isCustom: string) => {
-  const { foodRepository } = useRepositories();
   const [t] = useLanguage();
 
-  const [food, setFood] = useState<FoodWithCategory | UserFood | null>(null);
-  const [nutrients, setNutrients] = useState<FoodNutrientWithDefinition[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  selectedFoodId$.set({
+    id: parseInt(id, 10),
+    isCustom: isCustom === 'true',
+  });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        const foodId = parseInt(id, 10);
-        if (isCustom === 'true') {
-          const data = await foodRepository.getUserFoodById(foodId);
-          setFood(data);
-          setNutrients([]);
-        } else {
-          const [data, nutrientData] = await Promise.all([
-            foodRepository.getFoodById(foodId),
-            foodRepository.getFoodNutrients(foodId),
-          ]);
-          setFood(data);
-          setNutrients(nutrientData);
-        }
-      } catch (error) {
-        console.error('Failed to fetch food details:', error);
-      } finally {
-        setIsLoading(false);
-      }
+  const food = useValue(foodDetailStore$.food);
+  const nutrients = useValue(foodDetailStore$.nutrients);
+
+  const { isLoading, error } = useValue(() => {
+    const foodState = syncState(foodDetailStore$.food);
+    const nutrientsState = syncState(foodDetailStore$.nutrients);
+
+    return {
+      isLoading: !foodState.isLoaded.get() || !nutrientsState.isLoaded.get(),
+      error: foodState.error.get() || nutrientsState.error.get(),
     };
-
-    fetchData();
-  }, [id, isCustom, foodRepository]);
+  });
 
   const categorizedNutrients = useMemo(() => {
     const result: Record<NutrientCategory, FoodNutrientWithDefinition[]> = {
@@ -111,6 +99,7 @@ export const useFoodDetailFacade = (id: string, isCustom: string) => {
     food,
     nutrients,
     isLoading,
+    error,
     categorizedNutrients,
     macros,
   };
