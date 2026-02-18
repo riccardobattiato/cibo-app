@@ -62,7 +62,11 @@ export const foodStore$ = observable({
             ]);
             return [...defaultFoods, ...userFoods];
           }
-          return foodRepo.getFoods(sel.id);
+          const [defaultFoods, userFoodsInCategory] = await Promise.all([
+            foodRepo.getFoods(sel.id),
+            foodRepo.getUserFoodsByCategory(sel.id, false),
+          ]);
+          return [...defaultFoods, ...userFoodsInCategory];
         }
       }
 

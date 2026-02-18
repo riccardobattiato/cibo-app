@@ -25,18 +25,32 @@ export const useFoodFacade = () => {
     syncState(foodStore$.foods).sync();
   };
 
-  const addFood = (food: Omit<UserFood, 'id'>) => {
-    foodStore$.userFoods.push({ ...food, id: 0 } as UserFood);
+  const addFood = async (food: Omit<UserFood, 'id'>) => {
+    await foodRepository.createUserFood(food);
+    syncState(foodStore$.userFoods).sync();
+    syncState(foodStore$.foods).sync();
   };
 
-  const createVariation = async (foodId: number) => {
-    try {
+  const updateFood = async (id: number, food: Partial<UserFood>) => {
+    await foodRepository.updateUserFood(id, food);
+    syncState(foodStore$.userFoods).sync();
+    syncState(foodStore$.foods).sync();
+  };
+
+  const deleteFood = async (id: number) => {
+    await foodRepository.deleteUserFood(id);
+    syncState(foodStore$.userFoods).sync();
+    syncState(foodStore$.foods).sync();
+  };
+
+  const createVariation = async (foodId: number, isUserFood: boolean) => {
+    if (isUserFood) {
+      await foodRepository.createUserFoodVariation(foodId);
+    } else {
       await foodRepository.createVariation(foodId);
-      syncState(foodStore$.userFoods).sync();
-    } catch (error) {
-      console.error('Failed to create variation:', error);
-      throw error;
     }
+    syncState(foodStore$.userFoods).sync();
+    syncState(foodStore$.foods).sync();
   };
 
   return {
@@ -45,6 +59,8 @@ export const useFoodFacade = () => {
     searchQuery,
     setSearchQuery,
     addFood,
+    updateFood,
+    deleteFood,
     createVariation,
     isLoading,
     syncError: error,

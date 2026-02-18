@@ -27,11 +27,6 @@ export const FoodHeader: React.FC<FoodHeaderProps> = ({ food, isCustom, locale }
           <Text variant="h1" className="text-center text-3xl">
             {displayName}
           </Text>
-          {isCustom && (
-            <Badge variant="secondary">
-              <Text>{t('pantry.customCategories')}</Text>
-            </Badge>
-          )}
         </View>
         {food.scientific_name && (
           <Text className="text-muted-foreground mt-1 italic">{food.scientific_name}</Text>

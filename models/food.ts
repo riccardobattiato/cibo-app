@@ -62,15 +62,13 @@ export interface UserFood {
   name: string;
   category_id: number | null;
   is_category_custom: boolean;
-  source_food_id: number | null; // Null if not a variation
+  source_food_id: number | null;
   scientific_name: string | null;
   english_name: string | null;
   information: string | null;
   edible_part_percentage: number | null;
   portion_value: number | null;
   portion_unit: string | null;
-
-  // Nutrients
   energy_kcal: number | null;
   protein_g: number | null;
   fat_g: number | null;
@@ -79,3 +77,26 @@ export interface UserFood {
   fiber_g: number | null;
   sodium_mg: number | null;
 }
+
+export type CopyableNutritionFields = Pick<
+  UserFood,
+  | 'name'
+  | 'category_id'
+  | 'scientific_name'
+  | 'english_name'
+  | 'information'
+  | 'edible_part_percentage'
+  | 'portion_value'
+  | 'portion_unit'
+  | 'energy_kcal'
+  | 'protein_g'
+  | 'fat_g'
+  | 'carbohydrates_g'
+  | 'sugar_g'
+  | 'fiber_g'
+  | 'sodium_mg'
+>;
+
+export type FoodVariationSource = {
+  id: number;
+} & CopyableNutritionFields;

@@ -23,9 +23,11 @@ export interface IFoodRepository {
 
   // User Custom Foods
   getUserFoods(userCategoryId?: number): Promise<UserFood[]>;
+  getUserFoodsByCategory(categoryId: number, isCustom: boolean): Promise<UserFood[]>;
   getUserFoodById(id: number): Promise<UserFood | null>;
   createUserFood(food: Omit<UserFood, 'id'>): Promise<number>;
   updateUserFood(id: number, food: Partial<UserFood>): Promise<void>;
   deleteUserFood(id: number): Promise<void>;
   createVariation(foodId: number): Promise<number>;
+  createUserFoodVariation(userFoodId: number): Promise<number>;
 }

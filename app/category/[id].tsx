@@ -5,22 +5,31 @@ import { observer } from '@legendapp/state/react';
 import { usePantryFacade } from '@/features/pantry/usePantryFacade';
 import { FoodList } from '@/features/pantry/components/FoodList';
 import { CategoryDialog } from '@/features/pantry/components/CategoryDialog';
+import { FoodDialog } from '@/features/pantry/components/FoodDialog';
 import { Button } from '@/components/atoms/button';
 import { Icon } from '@/components/atoms/icon';
-import { Edit2, ChevronLeft } from 'lucide-react-native';
+import { Edit2, ChevronLeft, Plus } from 'lucide-react-native';
 import { Text } from '@/components/atoms/text';
-import { useLanguage } from '@/locale/useLanguage';
+import { UserFood } from '@/models/food';
 
 export default observer(function CategoryScreen() {
   const { id, isCustom } = useLocalSearchParams<{ id: string; isCustom: string }>();
   const router = useRouter();
-  const [t] = useLanguage();
-  const { categories, userCategories, foods, setSelectedCategory, updateCategory, isLoading } =
-    usePantryFacade();
+  const {
+    categories,
+    userCategories,
+    foods,
+    setSelectedCategory,
+    updateCategory,
+    addFood,
+    isLoading,
+  } = usePantryFacade();
 
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
+  const [isFoodDialogOpen, setIsFoodDialogOpen] = useState(false);
   const [categoryName, setCategoryName] = useState('');
   const [categoryIcon, setCategoryIcon] = useState('Package');
+  const [newFood, setNewFood] = useState<Partial<UserFood>>({});
 
   const categoryId = Number(id);
   const custom = isCustom === 'true';
@@ -41,10 +50,52 @@ export default observer(function CategoryScreen() {
     }
   }, [currentCategory]);
 
-  const handleUpdate = () => {
+  const handleUpdateCategory = () => {
     if (categoryName.trim() && currentCategory) {
       updateCategory(currentCategory.id, categoryName, categoryIcon);
-      setIsDialogOpen(false);
+      setIsCategoryDialogOpen(false);
+    }
+  };
+
+  const handleOpenFoodDialog = () => {
+    setNewFood({
+      name: '',
+      category_id: custom ? categoryId : (currentCategory?.id ?? null),
+      is_category_custom: custom,
+      energy_kcal: null,
+      protein_g: null,
+      fat_g: null,
+      carbohydrates_g: null,
+      sugar_g: null,
+      fiber_g: null,
+      sodium_mg: null,
+    });
+    setIsFoodDialogOpen(true);
+  };
+
+  const handleCreateFood = () => {
+    if (newFood.name?.trim()) {
+      addFood({
+        name: newFood.name,
+        category_id: newFood.category_id ?? null,
+        is_category_custom: newFood.is_category_custom ?? false,
+        source_food_id: null,
+        scientific_name: null,
+        english_name: null,
+        information: null,
+        edible_part_percentage: null,
+        portion_value: null,
+        portion_unit: null,
+        energy_kcal: newFood.energy_kcal ?? null,
+        protein_g: newFood.protein_g ?? null,
+        fat_g: newFood.fat_g ?? null,
+        carbohydrates_g: newFood.carbohydrates_g ?? null,
+        sugar_g: newFood.sugar_g ?? null,
+        fiber_g: newFood.fiber_g ?? null,
+        sodium_mg: newFood.sodium_mg ?? null,
+      });
+      setIsFoodDialogOpen(false);
+      setNewFood({});
     }
   };
 
@@ -59,12 +110,18 @@ export default observer(function CategoryScreen() {
               <Icon as={ChevronLeft} />
             </Button>
           ),
-          headerRight: () =>
-            custom ? (
-              <Button variant="ghost" size="icon" onPress={() => setIsDialogOpen(true)}>
-                <Icon as={Edit2} size={20} />
+          headerRight: () => (
+            <View className="flex-row gap-1">
+              <Button variant="ghost" size="icon" onPress={handleOpenFoodDialog}>
+                <Icon as={Plus} size={20} />
               </Button>
-            ) : null,
+              {custom ? (
+                <Button variant="ghost" size="icon" onPress={() => setIsCategoryDialogOpen(true)}>
+                  <Icon as={Edit2} size={20} />
+                </Button>
+              ) : null}
+            </View>
+          ),
         }}
       />
 
@@ -85,14 +142,23 @@ export default observer(function CategoryScreen() {
       )}
 
       <CategoryDialog
-        isOpen={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
+        isOpen={isCategoryDialogOpen}
+        onOpenChange={setIsCategoryDialogOpen}
         categoryName={categoryName}
         onCategoryNameChange={setCategoryName}
         categoryIcon={categoryIcon}
         onCategoryIconChange={setCategoryIcon}
-        onSubmit={handleUpdate}
+        onSubmit={handleUpdateCategory}
         isEditing={true}
+      />
+
+      <FoodDialog
+        isOpen={isFoodDialogOpen}
+        onOpenChange={setIsFoodDialogOpen}
+        food={newFood}
+        onFoodChange={setNewFood}
+        onSubmit={handleCreateFood}
+        isEditing={false}
       />
     </View>
   );
