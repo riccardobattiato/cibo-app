@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ScrollView } from 'react-native';
+import { View } from 'react-native';
 import { Text } from '@/components/atoms/text';
 import { Separator } from '@/components/atoms/separator';
 import { cn } from '@/lib/utils';
@@ -32,22 +32,20 @@ export const NutrientTable: React.FC<NutrientTableProps> = ({ title, nutrients, 
       <Text variant="h3" className="mb-4 text-lg">
         {title}
       </Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        <View className="min-w-full">
-          {nutrients.map((nutrient, index) => (
-            <React.Fragment key={`${nutrient.name}-${index}`}>
-              <View className="flex-row items-center justify-between py-2 pr-4">
-                <Text className="text-muted-foreground flex-1 pr-4">{nutrient.name}</Text>
-                <View className="flex-row items-baseline gap-1">
-                  <Text className="font-semibold">{nutrient.value}</Text>
-                  <Text className="text-muted-foreground text-xs">{nutrient.unit}</Text>
-                </View>
+      <View className="min-w-full">
+        {nutrients.map((nutrient, index) => (
+          <React.Fragment key={`${nutrient.name}-${index}`}>
+            <View className="flex-row items-center justify-between py-2 pr-4">
+              <Text className="text-muted-foreground flex-1 pr-4">{nutrient.name}</Text>
+              <View className="flex-row items-baseline gap-1">
+                <Text className="font-semibold">{nutrient.value}</Text>
+                <Text className="text-muted-foreground text-xs">{nutrient.unit}</Text>
               </View>
-              {index < nutrients.length - 1 && <Separator />}
-            </React.Fragment>
-          ))}
-        </View>
-      </ScrollView>
+            </View>
+            {index < nutrients.length - 1 && <Separator />}
+          </React.Fragment>
+        ))}
+      </View>
     </View>
   );
 };
