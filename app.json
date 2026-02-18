@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "minimal",
-    "slug": "minimal",
+    "name": "cibo",
+    "slug": "cibo",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "minimal",
+    "scheme": "cibo",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
@@ -16,15 +16,15 @@
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.riccardobattiato.minimal"
+      "bundleIdentifier": "com.movingparts.cibo"
     },
     "android": {
       "edgeToEdgeEnabled": true,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive_icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#16a380"
       },
-      "package": "com.riccardobattiato.minimal"
+      "package": "com.movingparts.cibo"
     },
     "web": {
       "bundler": "metro",
