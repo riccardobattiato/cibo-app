@@ -23,6 +23,7 @@ export const useCategoryFacade = () => {
     } else {
       selectedCategory$.set({ id, isCustom });
     }
+    syncState(foodStore$.foods).sync();
   };
 
   const addCategory = (name: string, icon?: string) => {

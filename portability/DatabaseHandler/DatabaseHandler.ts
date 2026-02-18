@@ -3,11 +3,16 @@ import { moveAssetsDatabase, open, type DB } from '@op-engineering/op-sqlite';
 export interface IDatabase {
   db: DB | null;
   initialize(): Promise<void>;
+  ready: Promise<void>;
 }
 
 export class AppDatabase implements IDatabase {
   private _db: DB | null = null;
   private readonly DB_NAME = 'food.db';
+  private _readyResolve!: () => void;
+  readonly ready: Promise<void> = new Promise((resolve) => {
+    this._readyResolve = resolve;
+  });
 
   get db(): DB | null {
     return this._db;
@@ -20,11 +25,12 @@ export class AppDatabase implements IDatabase {
         overwrite: true,
       });
       if (!moved) {
-        console.warn('Database move failed.');
+        throw new Error('Database move failed. Ensure the database is bundled in assets.');
       }
 
       this._db = open({ name: this.DB_NAME });
       await this.initializeUserTables();
+      this._readyResolve();
       console.log('Database initialized successfully');
     } catch (error) {
       console.error('Failed to initialize database:', error);
@@ -44,14 +50,12 @@ export class AppDatabase implements IDatabase {
         )
       `);
 
-      // Try to add icon column if it doesn't exist (for existing databases)
       try {
         await tx.execute('ALTER TABLE user_categories ADD COLUMN icon TEXT');
       } catch (e) {
         // Column might already exist
       }
 
-      // Try to add icon column to default categories if it doesn't exist
       try {
         await tx.execute('ALTER TABLE categories ADD COLUMN icon TEXT');
       } catch (e) {

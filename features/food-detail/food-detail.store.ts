@@ -1,6 +1,5 @@
 import { observable } from '@legendapp/state';
 import { synced } from '@legendapp/state/sync';
-import { when } from '@legendapp/state';
 import { database } from '@/portability/DatabaseHandler/DatabaseHandler';
 import { FoodRepository } from '@/repositories/food/food.repository';
 import { FoodWithCategory, UserFood, FoodNutrientWithDefinition } from '@/models/food';
@@ -18,8 +17,8 @@ export const selectedFoodId$ = observable<{ id: number; isCustom: boolean } | un
 export const foodDetailStore$ = observable({
   food: synced({
     get: async (): Promise<FoodWithCategory | UserFood | null> => {
+      await database.ready;
       const sel = selectedFoodId$.get();
-      await when(() => !!database.db);
 
       if (!sel) return null;
 
@@ -32,9 +31,10 @@ export const foodDetailStore$ = observable({
   }),
 
   nutrients: synced({
+    initial: [],
     get: async (): Promise<FoodNutrientWithDefinition[]> => {
+      await database.ready;
       const sel = selectedFoodId$.get();
-      await when(() => !!database.db);
 
       if (!sel || sel.isCustom) return [];
 

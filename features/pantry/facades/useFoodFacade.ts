@@ -22,6 +22,7 @@ export const useFoodFacade = () => {
 
   const setSearchQuery = (query: string) => {
     searchQuery$.set(query);
+    syncState(foodStore$.foods).sync();
   };
 
   const addFood = (food: Omit<UserFood, 'id'>) => {
@@ -31,9 +32,7 @@ export const useFoodFacade = () => {
   const createVariation = async (foodId: number) => {
     try {
       await foodRepository.createVariation(foodId);
-      // Explicitly trigger a re-sync of user foods
-      // @ts-ignore - sync() is available on synced observables in LS v3
-      await foodStore$.userFoods.sync();
+      syncState(foodStore$.userFoods).sync();
     } catch (error) {
       console.error('Failed to create variation:', error);
       throw error;

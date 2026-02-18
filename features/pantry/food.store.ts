@@ -1,4 +1,4 @@
-import { observable, when } from '@legendapp/state';
+import { observable } from '@legendapp/state';
 import { synced } from '@legendapp/state/sync';
 import { database } from '@/portability/DatabaseHandler/DatabaseHandler';
 import { FoodRepository } from '@/repositories/food/food.repository';
@@ -19,15 +19,11 @@ export const selectedCategory$ = observable<{ id: number; isCustom: boolean } | 
 );
 export const searchQuery$ = observable<string>('');
 
-/**
- * foodStore$ strictly defines the sync and persistence layer.
- * In v3, the 'set' function receives the full value and the changes.
- * For a local-first SQLite sync, we process the changes array to perform incremental updates.
- */
 export const foodStore$ = observable({
   categories: synced({
+    initial: [],
     get: async (): Promise<FoodCategory[]> => {
-      await when(() => !!database.db);
+      await database.ready;
       return foodRepo.getCategories();
     },
     persist: { name: PERSIST_KEY.CATEGORIES, plugin: ObservablePersistMMKV },
@@ -36,17 +32,14 @@ export const foodStore$ = observable({
   foods: synced({
     initial: [],
     get: async (): Promise<(Food | UserFood)[]> => {
-      // Track observables synchronously BEFORE any await to ensure reactivity in v3
+      await database.ready;
       const sel = selectedCategory$.get();
       const query = searchQuery$.get();
 
-      await when(() => !!database.db);
-
       if (query) {
-        // For search, we combine both default and user foods
         const [defaultFoods, userFoods] = await Promise.all([
           foodRepo.searchFoods(query),
-          foodRepo.getUserFoods(), // Ideally we'd have a searchUserFoods method
+          foodRepo.getUserFoods(),
         ]);
 
         const filteredUserFoods = userFoods.filter(
@@ -63,7 +56,6 @@ export const foodStore$ = observable({
           return foodRepo.getUserFoods(sel.id);
         } else {
           if (sel.id === 0) {
-            // "All" category: combine default and user foods
             const [defaultFoods, userFoods] = await Promise.all([
               foodRepo.getFoods(),
               foodRepo.getUserFoods(),
@@ -74,20 +66,19 @@ export const foodStore$ = observable({
         }
       }
 
-      // If no selection and no search, we return all default foods by default
-      // or we could return nothing if we only want to show foods when a category is selected.
-      // The prompt says "All" category card at the end should show all entries.
       return [];
     },
     persist: { name: PERSIST_KEY.FOODS, plugin: ObservablePersistMMKV },
   }),
 
   userCategories: synced({
+    initial: [],
     get: async (): Promise<UserFoodCategory[]> => {
-      await when(() => !!database.db);
+      await database.ready;
       return foodRepo.getUserCategories();
     },
     set: async ({ changes }) => {
+      await database.ready;
       for (const change of changes) {
         const { path, valueAtPath, prevAtPath } = change;
         if (path.length === 0) continue;
@@ -113,11 +104,13 @@ export const foodStore$ = observable({
   }),
 
   userFoods: synced({
+    initial: [],
     get: async (): Promise<UserFood[]> => {
-      await when(() => !!database.db);
+      await database.ready;
       return foodRepo.getUserFoods();
     },
     set: async ({ changes }) => {
+      await database.ready;
       for (const change of changes) {
         const { path, valueAtPath, prevAtPath } = change;
         if (path.length === 0) continue;
