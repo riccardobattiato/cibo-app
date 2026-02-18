@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import { DonutChart as SkiaDonutChart } from 'expo-skia-charts';
 import { Text } from '@/components/atoms/text';
 import { useCSSVariable } from 'uniwind';
+import { cn } from '@/lib/utils';
 
 interface MacroChartProps {
   colorVar: string;
@@ -13,17 +14,17 @@ interface MacroChartProps {
 }
 
 const colorClassMap: Record<string, { bg: string; text: string }> = {
-  red: {
-    bg: 'bg-red-100 dark:bg-red-900/30',
-    text: 'text-red-600 dark:text-red-400',
+  rose: {
+    bg: 'bg-rose-100 dark:bg-rose-900/30',
+    text: 'text-rose-600 dark:text-rose-400',
   },
-  emerald: {
-    bg: 'bg-emerald-100 dark:bg-emerald-900/30',
-    text: 'text-emerald-600 dark:text-emerald-400',
+  green: {
+    bg: 'bg-green-100 dark:bg-green-900/30',
+    text: 'text-green-600 dark:text-green-400',
   },
-  amber: {
-    bg: 'bg-amber-100 dark:bg-amber-900/30',
-    text: 'text-amber-600 dark:text-amber-400',
+  orange: {
+    bg: 'bg-orange-100 dark:bg-orange-900/30',
+    text: 'text-orange-600 dark:text-orange-400',
   },
 };
 
@@ -41,7 +42,7 @@ export const MacroChart: React.FC<MacroChartProps> = ({
   const grayColor = useCSSVariable('--color-zinc-300');
 
   return (
-    <View className={`items-center rounded-2xl p-3 ${styles.bg}`}>
+    <View className={cn('items-center rounded-2xl px-1 py-2', styles.bg)}>
       <View style={{ height: chartSize, width: chartSize }}>
         <SkiaDonutChart
           config={{
@@ -50,7 +51,7 @@ export const MacroChart: React.FC<MacroChartProps> = ({
               { value: remainder, label: 'rest' },
             ],
             colors: [chartColor as string, grayColor as string],
-            strokeWidth: 14,
+            strokeWidth: 8,
             gap: 0,
             roundedCorners: true,
             legend: { enabled: false },
@@ -60,14 +61,14 @@ export const MacroChart: React.FC<MacroChartProps> = ({
               renderContent: () => (
                 <View className="items-center justify-center">
                   <Text className="text-lg font-extrabold">{percentage.toFixed(0)}%</Text>
-                  <Text className="text-muted-foreground text-xs">{value.toFixed(1)}g</Text>
+                  <Text className={cn('text-xs', styles.text)}>{value.toFixed(1)}g</Text>
                 </View>
               ),
             },
           }}
         />
       </View>
-      <Text className={`mt-2 text-sm font-medium ${styles.text}`}>{label}</Text>
+      <Text className="text-foreground mt-2 text-sm font-medium">{label}</Text>
     </View>
   );
 };

@@ -16,7 +16,7 @@ interface MacroChartsProps {
 
 export const MacroCharts: React.FC<MacroChartsProps> = ({ macros }) => {
   const { width } = useWindowDimensions();
-  const chartSize = Math.min(120, (width - 128) / 3);
+  const chartSize = Math.min(120, (width - 80) / 3);
 
   return (
     <View className="mb-6 flex-row justify-center gap-3">

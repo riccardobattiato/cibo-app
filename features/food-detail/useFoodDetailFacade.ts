@@ -86,22 +86,22 @@ export const useFoodDetailFacade = (id: string, isCustom: string) => {
       {
         key: 'protein',
         value: food.protein_g,
-        colorVar: '--color-red-500',
-        colorClass: 'red',
+        colorVar: '--color-rose-400',
+        colorClass: 'rose',
         label: t('food.protein'),
       },
       {
         key: 'carbs',
         value: food.carbohydrates_g,
-        colorVar: '--color-emerald-500',
-        colorClass: 'emerald',
+        colorVar: '--color-green-400',
+        colorClass: 'green',
         label: t('food.carbs'),
       },
       {
         key: 'fat',
         value: food.fat_g,
-        colorVar: '--color-amber-500',
-        colorClass: 'amber',
+        colorVar: '--color-orange-400',
+        colorClass: 'orange',
         label: t('food.fat'),
       },
     ];
