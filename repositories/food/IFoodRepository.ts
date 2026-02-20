@@ -30,4 +30,20 @@ export interface IFoodRepository {
   deleteUserFood(id: number): Promise<void>;
   createVariation(foodId: number): Promise<number>;
   createUserFoodVariation(userFoodId: number): Promise<number>;
+
+  // Semantic Search
+  semanticSearchFoods(
+    embedding: Float32Array,
+    limit?: number
+  ): Promise<(Food & { distance?: number })[]>;
+  semanticSearchUserFoods(
+    embedding: Float32Array,
+    limit?: number
+  ): Promise<(UserFood & { distance?: number })[]>;
+  searchFoods(query: string): Promise<Food[]>;
+  searchUserFoods(query: string): Promise<UserFood[]>;
+  getMissingEmbeddingsFoods(): Promise<Food[]>;
+  getMissingEmbeddingsUserFoods(): Promise<UserFood[]>;
+  upsertFoodEmbedding(foodId: number, embedding: Float32Array): Promise<void>;
+  upsertUserFoodEmbedding(userFoodId: number, embedding: Float32Array): Promise<void>;
 }

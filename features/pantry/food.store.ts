@@ -4,8 +4,15 @@ import { database } from '@/portability/DatabaseHandler/DatabaseHandler';
 import { FoodRepository } from '@/repositories/food/food.repository';
 import { FoodCategory, UserFood, UserFoodCategory, Food } from '@/models/food';
 import { ObservablePersistMMKV } from '@legendapp/state/persist-plugins/mmkv';
+import { embeddingService } from '@/services/EmbeddingService';
+import { indexingService } from '@/services/IndexingService';
 
 const foodRepo = new FoodRepository(database);
+
+// Background indexing
+database.ready.then(() => {
+  indexingService.indexAllMissing();
+});
 
 const PERSIST_KEY = {
   CATEGORIES: 'food_categories_cache',
@@ -14,12 +21,10 @@ const PERSIST_KEY = {
   USER_FOODS: 'user_foods_cache',
 };
 
-export const selectedCategory$ = observable<{ id: number; isCustom: boolean } | undefined>(
-  undefined
-);
-export const searchQuery$ = observable<string>('');
-
 export const foodStore$ = observable({
+  selectedCategory: undefined as { id: number; isCustom: boolean } | undefined,
+  searchQuery: '',
+
   categories: synced({
     initial: [],
     get: async (): Promise<FoodCategory[]> => {
@@ -31,24 +36,55 @@ export const foodStore$ = observable({
 
   foods: synced({
     initial: [],
+    debounce: 350,
     get: async (): Promise<(Food | UserFood)[]> => {
+      const sel = foodStore$.selectedCategory.get();
+      const query = foodStore$.searchQuery.get();
+
       await database.ready;
-      const sel = selectedCategory$.get();
-      const query = searchQuery$.get();
 
-      if (query) {
-        const [defaultFoods, userFoods] = await Promise.all([
-          foodRepo.searchFoods(query),
-          foodRepo.getUserFoods(),
-        ]);
+      if (query && query.trim().length > 0) {
+        try {
+          const [keywordDefault, keywordUser] = await Promise.all([
+            foodRepo.searchFoods(query),
+            foodRepo.searchUserFoods(query),
+          ]);
 
-        const filteredUserFoods = userFoods.filter(
-          (f) =>
-            f.name.toLowerCase().includes(query.toLowerCase()) ||
-            f.english_name?.toLowerCase().includes(query.toLowerCase())
-        );
+          let semanticDefault: any[] = [];
+          let semanticUser: any[] = [];
 
-        return [...defaultFoods, ...filteredUserFoods];
+          try {
+            const queryEmbedding = await embeddingService.getEmbedding(query);
+            [semanticDefault, semanticUser] = await Promise.all([
+              foodRepo.semanticSearchFoods(queryEmbedding, 40),
+              foodRepo.semanticSearchUserFoods(queryEmbedding, 20),
+            ]);
+          } catch {
+            // Silently fall back if semantic fails
+          }
+
+          const seenIds = new Set<string>();
+          const results: (Food | UserFood)[] = [];
+
+          const addResults = (items: (Food | UserFood)[], isSemantic = false) => {
+            for (const item of items) {
+              const isUser = 'is_category_custom' in item || 'source_food_id' in item;
+              const globalId = `${isUser ? 'u' : 'd'}_${item.id}`;
+              if (!seenIds.has(globalId)) {
+                if (isSemantic && 'distance' in item && (item as any).distance > 1.4) continue;
+                seenIds.add(globalId);
+                results.push(item);
+              }
+            }
+          };
+
+          addResults([...keywordDefault, ...keywordUser]);
+          addResults([...semanticDefault, ...semanticUser], true);
+
+          return results;
+        } catch (error) {
+          return [];
+        }
       }
 
       if (sel) {
@@ -125,13 +161,18 @@ export const foodStore$ = observable({
         if (prevFood === undefined && food) {
           const id = await foodRepo.createUserFood(food);
           (foodStore$.userFoods[index] as any).id.set(id);
+          foodRepo.getUserFoodById(id).then((f) => f && indexingService.indexUserFood(f));
         } else if (food === undefined && prevFood) {
           await foodRepo.deleteUserFood(prevFood.id);
         } else if (food && prevFood) {
           await foodRepo.updateUserFood(food.id, food);
+          indexingService.indexUserFood(food);
         }
       }
     },
     persist: { name: PERSIST_KEY.USER_FOODS, plugin: ObservablePersistMMKV },
   }),
 });
+
+export const searchQuery$ = foodStore$.searchQuery;
+export const selectedCategory$ = foodStore$.selectedCategory;

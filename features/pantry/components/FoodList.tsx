@@ -16,7 +16,10 @@ export const FoodList: React.FC<FoodListProps> = ({ foods, onFoodPress }) => {
   return (
     <LegendList
       data={foods}
-      keyExtractor={(item) => `food-${item.id}`}
+      keyExtractor={(item) => {
+        const isUser = 'is_category_custom' in item || 'source_food_id' in item;
+        return `${isUser ? 'u' : 'd'}-${item.id}`;
+      }}
       estimatedItemSize={60}
       contentContainerStyle={{ padding: 16 }}
       renderItem={({ item }) => (
@@ -27,13 +30,13 @@ export const FoodList: React.FC<FoodListProps> = ({ foods, onFoodPress }) => {
             <Text className="font-semibold">{item.name}</Text>
             {item.english_name && (
               <Text className="text-muted-foreground text-xs">
-                {t('food.carbs')} {item.carbohydrates_g} g, {t('food.protein')} {item.protein_g} g,{' '}
-                {t('food.fat')} {item.fat_g} g
+                {t('food.carbs')} {item.carbohydrates_g ?? 0} g, {t('food.protein')}{' '}
+                {item.protein_g ?? 0} g, {t('food.fat')} {item.fat_g ?? 0} g
               </Text>
             )}
           </View>
           <View className="items-end">
-            <Text className="text-primary font-bold">{item.energy_kcal} kcal</Text>
+            <Text className="text-primary font-bold">{item.energy_kcal ?? 0} kcal</Text>
             <Text className="text-muted-foreground text-xs">{t('pantry.kcalPer100g')}</Text>
           </View>
         </Pressable>

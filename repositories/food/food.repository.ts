@@ -9,7 +9,7 @@ import {
   CopyableNutritionFields,
 } from '@/models/food';
 import { IDatabase } from '@/portability/DatabaseHandler/DatabaseHandler';
-import { eq, and, like, or } from 'drizzle-orm';
+import { eq, and, like, or, sql } from 'drizzle-orm';
 import {
   categories,
   foods,
@@ -136,12 +136,127 @@ export class FoodRepository implements IFoodRepository {
 
   async searchFoods(query: string): Promise<Food[]> {
     const db = this.ensureDrizzle();
-    const result = await db
+    const stopwords = new Set([
+      'di',
+      'dei',
+      'del',
+      'della',
+      'delle',
+      'degli',
+      'il',
+      'lo',
+      'la',
+      'i',
+      'gli',
+      'le',
+      'un',
+      'una',
+      'uno',
+      'e',
+      'ed',
+      'con',
+      'senza',
+    ]);
+
+    const tokens = query
+      .trim()
+      .toLowerCase()
+      .replace(/[^\w\s]/g, ' ')
+      .split(/\s+/)
+      .filter((t) => t.length > 0);
+    const meaningfulTokens = tokens.filter((t) => !stopwords.has(t) || tokens.length === 1);
+
+    if (meaningfulTokens.length === 0) return [];
+
+    const ftsQuery = meaningfulTokens.map((t) => (t.length >= 2 ? `${t}*` : t)).join(' ');
+
+    try {
+      const result = await db.all(
+        sql`
+        SELECT f.*
+        FROM foods f
+        JOIN fts_foods fts ON f.id = fts.rowid
+        WHERE fts_foods MATCH ${ftsQuery}
+        ORDER BY rank
+        LIMIT 50
+      `
+      );
+      if (result && result.length > 0) return result as Food[];
+    } catch (e) {
+      // FTS search failed
+    }
+
+    // Improved Fallback: Token-aware LIKE search
+    const conditions = meaningfulTokens.map((token) =>
+      or(like(foods.name, `%${token}%`), like(foods.english_name, `%${token}%`))
+    );
+    return (await db
       .select()
       .from(foods)
-      .where(or(like(foods.name, `%${query}%`), like(foods.english_name, `%${query}%`)))
-      .orderBy(foods.name);
-    return result as Food[];
+      .where(and(...conditions))
+      .limit(50)) as Food[];
+  }
+
+  async searchUserFoods(query: string): Promise<UserFood[]> {
+    const db = this.ensureDrizzle();
+    const stopwords = new Set([
+      'di',
+      'dei',
+      'del',
+      'della',
+      'delle',
+      'degli',
+      'il',
+      'lo',
+      'la',
+      'i',
+      'gli',
+      'le',
+      'un',
+      'una',
+      'uno',
+      'e',
+      'ed',
+      'con',
+      'senza',
+    ]);
+
+    const tokens = query
+      .trim()
+      .toLowerCase()
+      .replace(/[^\w\s]/g, ' ')
+      .split(/\s+/)
+      .filter((t) => t.length > 0);
+    const meaningfulTokens = tokens.filter((t) => !stopwords.has(t) || tokens.length === 1);
+
+    if (meaningfulTokens.length === 0) return [];
+
+    const ftsQuery = meaningfulTokens.map((t) => (t.length >= 2 ? `${t}*` : t)).join(' ');
+
+    try {
+      const result = await db.all(
+        sql`
+        SELECT uf.*
+        FROM user_foods uf
+        JOIN fts_user_foods fts ON uf.id = fts.rowid
+        WHERE fts_user_foods MATCH ${ftsQuery}
+        ORDER BY rank
+        LIMIT 50
+      `
+      );
+      if (result && result.length > 0) return result as UserFood[];
+    } catch (e) {
+      // FTS search failed
+    }
+
+    const conditions = meaningfulTokens.map((token) =>
+      or(like(userFoods.name, `%${token}%`), like(userFoods.english_name, `%${token}%`))
+    );
+    return (await db
+      .select()
+      .from(userFoods)
+      .where(and(...conditions))
+      .limit(50)) as UserFood[];
   }
 
   async getUserCategories(): Promise<UserFoodCategory[]> {
@@ -270,6 +385,74 @@ export class FoodRepository implements IFoodRepository {
       sourceFood,
       sourceFood.is_category_custom,
       sourceFood.source_food_id ?? sourceFood.id
+    );
+  }
+
+  async semanticSearchFoods(
+    embedding: Float32Array,
+    limit = 50
+  ): Promise<(Food & { distance?: number })[]> {
+    const db = this.ensureDrizzle();
+    const result = await db.all(
+      sql`
+      SELECT f.*, v.distance
+      FROM foods f
+      JOIN vec_foods v ON f.id = v.rowid
+      WHERE v.embedding MATCH ${new Uint8Array(embedding.buffer)}
+        AND k = ${limit}
+      ORDER BY distance
+    `
+    );
+
+    return (result || []) as (Food & { distance?: number })[];
+  }
+
+  async semanticSearchUserFoods(
+    embedding: Float32Array,
+    limit = 50
+  ): Promise<(UserFood & { distance?: number })[]> {
+    const db = this.ensureDrizzle();
+    const result = await db.all(
+      sql`
+      SELECT uf.*, v.distance
+      FROM user_foods uf
+      JOIN vec_user_foods v ON uf.id = v.rowid
+      WHERE v.embedding MATCH ${new Uint8Array(embedding.buffer)}
+        AND k = ${limit}
+      ORDER BY distance
+    `
+    );
+
+    return (result || []) as (UserFood & { distance?: number })[];
+  }
+
+  async getMissingEmbeddingsFoods(): Promise<Food[]> {
+    const db = this.ensureDrizzle();
+    const result = await db.all(
+      sql`SELECT f.* FROM foods f LEFT JOIN vec_foods v ON f.id = v.rowid WHERE v.rowid IS NULL`
+    );
+    return (result || []) as Food[];
+  }
+
+  async getMissingEmbeddingsUserFoods(): Promise<UserFood[]> {
+    const db = this.ensureDrizzle();
+    const result = await db.all(
+      sql`SELECT uf.* FROM user_foods uf LEFT JOIN vec_user_foods v ON uf.id = v.rowid WHERE v.rowid IS NULL`
+    );
+    return (result || []) as UserFood[];
+  }
+
+  async upsertFoodEmbedding(foodId: number, embedding: Float32Array): Promise<void> {
+    const db = this.ensureDrizzle();
+    await db.run(
+      sql`INSERT OR REPLACE INTO vec_foods(rowid, embedding) VALUES(${foodId}, ${new Uint8Array(embedding.buffer)})`
+    );
+  }
+
+  async upsertUserFoodEmbedding(userFoodId: number, embedding: Float32Array): Promise<void> {
+    const db = this.ensureDrizzle();
+    await db.run(
+      sql`INSERT OR REPLACE INTO vec_user_foods(rowid, embedding) VALUES(${userFoodId}, ${new Uint8Array(embedding.buffer)})`
     );
   }
 }

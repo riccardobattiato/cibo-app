@@ -37,12 +37,56 @@ export class AppDatabase implements IDatabase {
       this._db = open({ name: DB_NAME });
       this._drizzle = initializeDb(this._db);
       await this.initializeUserTables();
+      await this.initializeVectorTables();
       this._readyResolve();
       console.log('Database initialized successfully');
     } catch (error) {
       console.error('Failed to initialize database:', error);
       throw error;
     }
+  }
+
+  private async initializeVectorTables(): Promise<void> {
+    if (!this._db) return;
+
+    await this._db.transaction(async (tx) => {
+      // vec0 virtual tables only support vector columns. rowid is used for mapping.
+      await tx.execute(`
+        CREATE VIRTUAL TABLE IF NOT EXISTS vec_foods USING vec0(
+          embedding FLOAT[384]
+        )
+      `);
+
+      await tx.execute(`
+        CREATE VIRTUAL TABLE IF NOT EXISTS vec_user_foods USING vec0(
+          embedding FLOAT[384]
+        )
+      `);
+
+      // FTS5 virtual tables for lexical search
+      // we index name, english_name and information
+      await tx.execute(`
+        CREATE VIRTUAL TABLE IF NOT EXISTS fts_foods USING fts5(
+          name,
+          english_name,
+          information,
+          content='foods',
+          content_rowid='id',
+          tokenize='unicode61 remove_diacritics 1'
+        )
+      `);
+
+      await tx.execute(`
+        CREATE VIRTUAL TABLE IF NOT EXISTS fts_user_foods USING fts5(
+          name,
+          english_name,
+          information,
+          content='user_foods',
+          content_rowid='id',
+          tokenize='unicode61 remove_diacritics 1'
+        )
+      `);
+    });
   }
 
   private async initializeUserTables(): Promise<void> {
